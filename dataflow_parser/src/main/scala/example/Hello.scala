@@ -58,6 +58,31 @@ object ScriptLexer extends RegexParsers {
 
 
 
+sealed trait TransformationAST
+case class AbstractTerminal(rep: String) extends TransformationAST
+case class FunctionCall(funcName: IdentifierToken, args: TransformationAST) extends TransformationAST
+
+object TransformationParser extends Parsers {
+  override type Elem = DataflowToken
+  private def terminal: Parser[TransformationAST] = AbstractTerminal()
+  //private def formula: Parser[TransformationAST] = phrase()
+}
+
+
+
+sealed trait DataflowScript
+case class Dependants(value: IdentifierToken) extends DataflowScript
+//case class Transformation()
+
+
+object ScriptParser extends Parsers {
+
+}
+
+
+
+
+
 
 
 object Hello extends Greeting with App {
