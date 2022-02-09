@@ -19,6 +19,8 @@ case object AssignEqToken extends DataflowToken
 case object AliasOpToken extends DataflowToken
 case class LiteralToken(rep: String) extends DataflowToken
 case class OperationToken(rep: String) extends DataflowToken
+case object OperationEquals extends DataflowToken
+case object OperationPlus extends DataflowToken
 case class NumberToken(rep: String) extends DataflowToken
 
 
@@ -43,7 +45,10 @@ object ScriptLexer extends RegexParsers {
   def literalToken: Parser[DataflowToken] = """\'[a-zA-Z0-9\\-]+\'""".r ^^ (rep => LiteralToken(rep))
   def identifierToken: Parser[DataflowToken] = """[a-zA-Z]+[a-zA-Z0-9]*""".r ^^ (id => IdentifierToken(id))
 
-  def operationToken: Parser[DataflowToken] = """(\-|\+|\=\=|&&|\|\||<|>|<\=|>\=|\=\=\=|\=\!\=)""".r ^^ (rep => OperationToken(rep))
+  //def operationToken: Parser[DataflowToken] = """(\-|\+|\=\=|&&|\|\||<|>|<\=|>\=|\=\=\=|\=\!\=)""".r ^^ (rep => OperationToken(rep))
+
+  def operationEquals: Parser[DataflowToken] = """\=\=""".r ^^ (_ => OperationEquals)
+  def operationPlus: Parser[DataflowToken] = """\+""".r ^^ (_ => OperationPlus)
    
   private def tokens: Parser[List[DataflowToken]] =
     phrase(
@@ -57,7 +62,9 @@ object ScriptLexer extends RegexParsers {
         assignEqToken  |
         aliasOpToken   |
         literalToken   |
-        operationToken |
+        //operationToken |
+        operationEquals |
+        operationPlus  |
         numberToken
       )
     )
@@ -72,6 +79,7 @@ sealed trait ExpressionAST
 case class Id(value: String) extends ExpressionAST
 case class Number(value: String) extends ExpressionAST
 case class Assign(id: String, value: String) extends ExpressionAST
+case class Operation(op: String, arg1: String, arg2: String) extends ExpressionAST
 case class FuncCall(func: String, args: ExpressionAST) extends ExpressionAST
 
 
@@ -92,18 +100,27 @@ object ExpressionParser extends Parsers {
   private def number = accept("Number", { case NumberToken(n) => Number(n)})
   private def terminal: Parser[ExpressionAST] = id | number
 
-  private def program: Parser[ExpressionAST] = phrase(expr)
-
   private def asign: Parser[ExpressionAST] = 
     (id ~ rep1(AssignEqToken) ~ number) ^^ {case Id(i) ~ op ~ Number(n) => Assign(i, n)}
+
+  private def operation: Parser[ExpressionAST] = {
+    val opEq = terminal ~ OperationEquals ~ terminal ^^ {
+      case i ~ _ ~ ii => Operation("Equals", i.toString, ii.toString)
+    }
+    val opAdd = terminal ~ OperationPlus ~ terminal ^^ {
+      case i ~ _ ~ ii => Operation("Add", i.toString, ii.toString)
+    }
+    opEq | opAdd
+  }
 
   private def funcCall: Parser[ExpressionAST] =
     (id ~ LeftParenToken ~ expr ~ RightParenToken) ^^ {
       case Id(i) ~ _ ~ ex ~ _ => FuncCall(i, ex)
     }
 
-  private def expr: Parser[ExpressionAST] = asign | funcCall
+  private def expr: Parser[ExpressionAST] = asign | funcCall | operation | terminal
   
+  private def program: Parser[ExpressionAST] = phrase(expr)
 
   def parseFromTokens(input: List[DataflowToken]) = {
     val reader = new ExpressionTokenReader(input)
@@ -148,6 +165,6 @@ DerivedColumn1 window(over(dummy),
 
   lazy val test3: String =
     """
-        source(input)
+        source(input+3)
 """
 }
