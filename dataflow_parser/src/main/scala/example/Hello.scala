@@ -1,7 +1,9 @@
 package example
 
 import scala.util.parsing.combinator._
+import scala.util.parsing.input.{NoPosition, Position, Reader}
 import scala.util.matching.Regex
+
 
 
 
@@ -16,6 +18,7 @@ case class AssignOpToken(rep: String) extends DataflowToken
 case object AliasOpToken extends DataflowToken
 case class LiteralToken(rep: String) extends DataflowToken
 case class OperationToken(rep: String) extends DataflowToken
+case class NumberToken(rep: String) extends DataflowToken
 
 
 
@@ -25,16 +28,20 @@ object ScriptLexer extends RegexParsers {
   override def skipWhitespace = true
   //override def whiteSpace: Regex = "[ \t\r\f\n]+".r
 
-  def identifierToken: Parser[DataflowToken] = """[a-zA-Z0-9]+""".r ^^ (id => IdentifierToken(id))
   def leftParenToken: Parser[DataflowToken] = "(" ^^ (_ => LeftParenToken)
   def rightParenToken: Parser[DataflowToken] = ")" ^^ (_ => RightParenToken)
   def leftBraceToken: Parser[DataflowToken] = "{" ^^ (_ => LeftBraceToken)
   def rightBraceToken: Parser[DataflowToken] = "}" ^^ (_ => RightBraceToken)
   def separatorToken: Parser[DataflowToken] = "," ^^ (_ => SeparatorToken)
+
   def assignOpToken: Parser[DataflowToken] = """([=:])|(~>)""".r ^^ (rep => AssignOpToken(rep))
   def aliasOpToken: Parser[DataflowToken] = "as" ^^ (_ => AliasOpToken)
+
+  def numberToken: Parser[DataflowToken] = """[0-9]+(\.){0,1}[0-9]*""".r ^^ (rep => NumberToken(rep))
   def literalToken: Parser[DataflowToken] = """\'[a-zA-Z0-9\\-]+\'""".r ^^ (rep => LiteralToken(rep))
-  def operationToken: Parser[DataflowToken] = """(\-|\+|\=\=)""".r ^^ (rep => OperationToken(rep))
+  def identifierToken: Parser[DataflowToken] = """[a-zA-Z]+[a-zA-Z0-9]*""".r ^^ (id => IdentifierToken(id))
+
+  def operationToken: Parser[DataflowToken] = """(\-|\+|\=\=|&&|\|\||<|>|<\=|>\=|\=\=\=|\=\!\=)""".r ^^ (rep => OperationToken(rep))
    
   private def tokens: Parser[List[DataflowToken]] =
     phrase(
@@ -47,7 +54,8 @@ object ScriptLexer extends RegexParsers {
         assignOpToken  |
         aliasOpToken   |
         literalToken   |
-        operationToken
+        operationToken |
+        numberToken
       )
     )
 
@@ -57,36 +65,35 @@ object ScriptLexer extends RegexParsers {
 
 
 
+sealed trait ExpressionAST
+case class Id(value: String) extends ExpressionAST
+case class Number(value: String) extends ExpressionAST
 
-sealed trait TransformationAST
-case class AbstractTerminal(rep: String) extends TransformationAST
-case class FunctionCall(funcName: IdentifierToken, args: TransformationAST) extends TransformationAST
 
-object TransformationParser extends Parsers {
+
+class ExpressionTokenReader(tokens: Seq[DataflowToken]) extends Reader[DataflowToken] {
+  def first: DataflowToken = tokens.head
+  def atEnd: Boolean = tokens.isEmpty
+  def pos: Position = NoPosition
+  def rest: Reader[DataflowToken] = new ExpressionTokenReader(tokens.tail)
+}
+
+
+
+object ExpressionParser extends Parsers {
   override type Elem = DataflowToken
-  private def terminal: Parser[TransformationAST] = AbstractTerminal()
-  //private def formula: Parser[TransformationAST] = phrase()
+
+  private def id = accept("Id", { case IdentifierToken(value) => Id(value)})
+  private def number = accept("Number", { case NumberToken(num) => Number(num)})
+  private def terminal: Parser[ExpressionAST] = id | number
 }
-
-
-
-sealed trait DataflowScript
-case class Dependants(value: IdentifierToken) extends DataflowScript
-//case class Transformation()
-
-
-object ScriptParser extends Parsers {
-
-}
-
-
-
 
 
 
 
 object Hello extends Greeting with App {
-  println(ScriptLexer.tokenize(test2))
+  ScriptLexer.tokenize(test1).map(x => x.map(println))
+  //println(ScriptLexer.tokenize(test2))
 }
 
 trait Greeting {
@@ -95,7 +102,8 @@ trait Greeting {
 source(output(
         'movieId' as string,
         title as string,
-        genres as string
+        genres as string,
+        aux = 23
     )) ~> source1
 """
 
