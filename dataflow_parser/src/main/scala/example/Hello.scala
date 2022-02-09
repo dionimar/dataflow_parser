@@ -15,6 +15,7 @@ case object SeparatorToken extends DataflowToken
 case object LeftBraceToken extends DataflowToken
 case object RightBraceToken extends DataflowToken
 case class AssignOpToken(rep: String) extends DataflowToken
+case object AssignEqToken extends DataflowToken
 case object AliasOpToken extends DataflowToken
 case class LiteralToken(rep: String) extends DataflowToken
 case class OperationToken(rep: String) extends DataflowToken
@@ -34,8 +35,9 @@ object ScriptLexer extends RegexParsers {
   def rightBraceToken: Parser[DataflowToken] = "}" ^^ (_ => RightBraceToken)
   def separatorToken: Parser[DataflowToken] = "," ^^ (_ => SeparatorToken)
 
-  def assignOpToken: Parser[DataflowToken] = """([=:])|(~>)""".r ^^ (rep => AssignOpToken(rep))
+  def assignOpToken: Parser[DataflowToken] = """(~>){1}""".r ^^ (rep => AssignOpToken(rep))
   def aliasOpToken: Parser[DataflowToken] = "as" ^^ (_ => AliasOpToken)
+  def assignEqToken: Parser[DataflowToken] = """[\=]""".r ^^ (_ => AssignEqToken)
 
   def numberToken: Parser[DataflowToken] = """[0-9]+(\.){0,1}[0-9]*""".r ^^ (rep => NumberToken(rep))
   def literalToken: Parser[DataflowToken] = """\'[a-zA-Z0-9\\-]+\'""".r ^^ (rep => LiteralToken(rep))
@@ -52,6 +54,7 @@ object ScriptLexer extends RegexParsers {
         rightBraceToken|
         separatorToken |
         assignOpToken  |
+        assignEqToken  |
         aliasOpToken   |
         literalToken   |
         operationToken |
@@ -68,10 +71,11 @@ object ScriptLexer extends RegexParsers {
 sealed trait ExpressionAST
 case class Id(value: String) extends ExpressionAST
 case class Number(value: String) extends ExpressionAST
+case class Assign(id: String, value: String) extends ExpressionAST
 
 
 
-class ExpressionTokenReader(tokens: Seq[DataflowToken]) extends Reader[DataflowToken] {
+class ExpressionTokenReader(tokens: List[DataflowToken]) extends Reader[DataflowToken] {
   def first: DataflowToken = tokens.head
   def atEnd: Boolean = tokens.isEmpty
   def pos: Position = NoPosition
@@ -83,17 +87,31 @@ class ExpressionTokenReader(tokens: Seq[DataflowToken]) extends Reader[DataflowT
 object ExpressionParser extends Parsers {
   override type Elem = DataflowToken
 
-  private def id = accept("Id", { case IdentifierToken(value) => Id(value)})
-  private def number = accept("Number", { case NumberToken(num) => Number(num)})
+  private def id = accept("Id", { case IdentifierToken(v) => Id(v)})
+  private def number = accept("Number", { case NumberToken(n) => Number(n)})
   private def terminal: Parser[ExpressionAST] = id | number
+
+  private def asign: Parser[ExpressionAST] = 
+    (id ~ rep1(AssignEqToken) ~ number) ^^ {case Id(i) ~ op ~ Number(n) => Assign(i, n)}
+
+  private def expr: Parser[ExpressionAST] = phrase(asign)
+
+  def parseFromTokens(input: List[DataflowToken]) = {
+    val reader = new ExpressionTokenReader(input)
+    expr(reader)
+  }
 }
 
 
 
 
 object Hello extends Greeting with App {
-  ScriptLexer.tokenize(test1).map(x => x.map(println))
   //println(ScriptLexer.tokenize(test2))
+  val tokens = ScriptLexer.tokenize(test3)
+  tokens.map(
+    tks => ExpressionParser.parseFromTokens(tks)
+  )
+  .map(println)
 }
 
 trait Greeting {
@@ -116,5 +134,10 @@ DerivedColumn1 window(over(dummy),
 	asc(sk, true),
 	prevAndCurr = lag(title,1)+'-'+last(title),
 		nextAndCurr = lead(title,1)+'-'+last(title)) ~> leadAndLag
+"""
+
+  lazy val test3: String =
+    """
+        movieId = 3
 """
 }
