@@ -72,6 +72,7 @@ sealed trait ExpressionAST
 case class Id(value: String) extends ExpressionAST
 case class Number(value: String) extends ExpressionAST
 case class Assign(id: String, value: String) extends ExpressionAST
+case class FuncCall(func: String, args: ExpressionAST) extends ExpressionAST
 
 
 
@@ -91,10 +92,18 @@ object ExpressionParser extends Parsers {
   private def number = accept("Number", { case NumberToken(n) => Number(n)})
   private def terminal: Parser[ExpressionAST] = id | number
 
+  private def program: Parser[ExpressionAST] = phrase(expr)
+
   private def asign: Parser[ExpressionAST] = 
     (id ~ rep1(AssignEqToken) ~ number) ^^ {case Id(i) ~ op ~ Number(n) => Assign(i, n)}
 
-  private def expr: Parser[ExpressionAST] = phrase(asign)
+  private def funcCall: Parser[ExpressionAST] =
+    (id ~ LeftParenToken ~ expr ~ RightParenToken) ^^ {
+      case Id(i) ~ _ ~ ex ~ _ => FuncCall(i, ex)
+    }
+
+  private def expr: Parser[ExpressionAST] = asign | funcCall
+  
 
   def parseFromTokens(input: List[DataflowToken]) = {
     val reader = new ExpressionTokenReader(input)
@@ -108,6 +117,7 @@ object ExpressionParser extends Parsers {
 object Hello extends Greeting with App {
   //println(ScriptLexer.tokenize(test2))
   val tokens = ScriptLexer.tokenize(test3)
+  println(tokens)
   tokens.map(
     tks => ExpressionParser.parseFromTokens(tks)
   )
@@ -138,6 +148,6 @@ DerivedColumn1 window(over(dummy),
 
   lazy val test3: String =
     """
-        movieId = 3
+        source(input)
 """
 }
