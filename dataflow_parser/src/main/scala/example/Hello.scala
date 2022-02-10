@@ -21,7 +21,7 @@ case class LiteralToken(rep: String) extends DataflowToken
 case class OperationToken(rep: String) extends DataflowToken
 case object OperationEquals extends DataflowToken
 case object OperationPlus extends DataflowToken
-case class NumberToken(rep: String) extends DataflowToken
+case class NumberToken(value: Float) extends DataflowToken
 
 
 
@@ -41,7 +41,7 @@ object ScriptLexer extends RegexParsers {
   def aliasOpToken: Parser[DataflowToken] = "as" ^^ (_ => AliasOpToken)
   def assignEqToken: Parser[DataflowToken] = """[\=]""".r ^^ (_ => AssignEqToken)
 
-  def numberToken: Parser[DataflowToken] = """[0-9]+(\.){0,1}[0-9]*""".r ^^ (rep => NumberToken(rep))
+  def numberToken: Parser[DataflowToken] = """\-{0,1}[0-9]+(\.){0,1}[0-9]*""".r ^^ (rep => NumberToken(rep.toFloat))
   def literalToken: Parser[DataflowToken] = """\'[a-zA-Z0-9\\-]+\'""".r ^^ (rep => LiteralToken(rep))
   def identifierToken: Parser[DataflowToken] = """[a-zA-Z]+[a-zA-Z0-9]*""".r ^^ (id => IdentifierToken(id))
 
@@ -77,8 +77,8 @@ object ScriptLexer extends RegexParsers {
 
 sealed trait ExpressionAST
 case class Id(value: String) extends ExpressionAST
-case class Number(value: String) extends ExpressionAST
-case class Assign(id: String, value: String) extends ExpressionAST
+case class Number(value: Float) extends ExpressionAST
+case class Assign(id: String, value: ExpressionAST) extends ExpressionAST
 case class Operation(op: String, arg1: ExpressionAST, arg2: ExpressionAST) extends ExpressionAST
 case class FuncCall(func: String, args: List[ExpressionAST]) extends ExpressionAST
 
@@ -101,7 +101,7 @@ object ExpressionParser extends Parsers {
   private def terminal: Parser[ExpressionAST] = id | number
 
   private def asign: Parser[ExpressionAST] = 
-    (id ~ AssignEqToken ~ number) ^^ {case Id(i) ~ op ~ Number(n) => Assign(i, n)}
+    (id ~ AssignEqToken ~ (terminal | expr)) ^^ {case Id(i) ~ op ~ value => Assign(i, value)}
 
   private def operation: Parser[ExpressionAST] = {
     val opEq = (terminal | expr) ~ OperationEquals ~ (expr | terminal) ^^ {
@@ -112,13 +112,6 @@ object ExpressionParser extends Parsers {
     }
     opEq | opAdd
   }
-
-  // private def operation: Parser[ExpressionAST] = {
-  //   val opEq = terminal ~ rep((OperationEquals | OperationPlus) ~ terminal) ^^ {
-  //     case i ~ _ ~ ii => Operation("Equals", i.toString, ii.toString)
-  //   }
-  //   opEq
-  // }
 
   private def arg: Parser[ExpressionAST] = (SeparatorToken ~ expr) ^^ {case _ ~ e => e}
 
@@ -174,6 +167,6 @@ DerivedColumn1 window(over(dummy),
 
   lazy val test3: String =
     """
-source(asdf, basdf, df)
+source(asdf, basdf,-23)
 """
 }
