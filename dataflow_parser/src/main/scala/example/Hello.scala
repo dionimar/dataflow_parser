@@ -80,7 +80,7 @@ case class Id(value: String) extends ExpressionAST
 case class Number(value: String) extends ExpressionAST
 case class Assign(id: String, value: String) extends ExpressionAST
 case class Operation(op: String, arg1: ExpressionAST, arg2: ExpressionAST) extends ExpressionAST
-case class FuncCall(func: String, args: ExpressionAST) extends ExpressionAST
+case class FuncCall(func: String, args: List[ExpressionAST]) extends ExpressionAST
 
 
 
@@ -120,9 +120,11 @@ object ExpressionParser extends Parsers {
   //   opEq
   // }
 
+  private def arg: Parser[ExpressionAST] = (SeparatorToken ~ expr) ^^ {case _ ~ e => e}
+
   private def funcCall: Parser[ExpressionAST] =
-    (id ~ LeftParenToken ~ expr ~ RightParenToken) ^^ {
-      case Id(i) ~ _ ~ ex ~ _ => FuncCall(i, ex)
+    (id ~ LeftParenToken ~ expr ~ (arg.*) ~ RightParenToken) ^^ {
+      case Id(i) ~ _ ~ ex1 ~ rest ~ _ => FuncCall(i, ex1 :: rest)
     }
 
   private def expr: Parser[ExpressionAST] = operation | funcCall | terminal | asign
@@ -172,6 +174,6 @@ DerivedColumn1 window(over(dummy),
 
   lazy val test3: String =
     """
-        source(1+2+input(46))+123
+source(asdf, basdf, df)
 """
 }
