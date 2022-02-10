@@ -79,7 +79,7 @@ sealed trait ExpressionAST
 case class Id(value: String) extends ExpressionAST
 case class Number(value: String) extends ExpressionAST
 case class Assign(id: String, value: String) extends ExpressionAST
-case class Operation(op: String, arg1: String, arg2: String) extends ExpressionAST
+case class Operation(op: String, arg1: ExpressionAST, arg2: ExpressionAST) extends ExpressionAST
 case class FuncCall(func: String, args: ExpressionAST) extends ExpressionAST
 
 
@@ -101,24 +101,31 @@ object ExpressionParser extends Parsers {
   private def terminal: Parser[ExpressionAST] = id | number
 
   private def asign: Parser[ExpressionAST] = 
-    (id ~ rep1(AssignEqToken) ~ number) ^^ {case Id(i) ~ op ~ Number(n) => Assign(i, n)}
+    (id ~ AssignEqToken ~ number) ^^ {case Id(i) ~ op ~ Number(n) => Assign(i, n)}
 
   private def operation: Parser[ExpressionAST] = {
-    val opEq = terminal ~ OperationEquals ~ terminal ^^ {
-      case i ~ _ ~ ii => Operation("Equals", i.toString, ii.toString)
+    val opEq = (terminal | expr) ~ OperationEquals ~ (expr | terminal) ^^ {
+      case i ~ _ ~ ii => Operation("Equals", i, ii)
     }
-    val opAdd = terminal ~ OperationPlus ~ terminal ^^ {
-      case i ~ _ ~ ii => Operation("Add", i.toString, ii.toString)
+    val opAdd = (terminal | expr) ~ OperationPlus ~ (expr | terminal) ^^ {
+      case i ~ _ ~ ii => Operation("Add", i, ii)
     }
     opEq | opAdd
   }
+
+  // private def operation: Parser[ExpressionAST] = {
+  //   val opEq = terminal ~ rep((OperationEquals | OperationPlus) ~ terminal) ^^ {
+  //     case i ~ _ ~ ii => Operation("Equals", i.toString, ii.toString)
+  //   }
+  //   opEq
+  // }
 
   private def funcCall: Parser[ExpressionAST] =
     (id ~ LeftParenToken ~ expr ~ RightParenToken) ^^ {
       case Id(i) ~ _ ~ ex ~ _ => FuncCall(i, ex)
     }
 
-  private def expr: Parser[ExpressionAST] = asign | funcCall | operation | terminal
+  private def expr: Parser[ExpressionAST] = operation | funcCall | terminal | asign
   
   private def program: Parser[ExpressionAST] = phrase(expr)
 
@@ -165,6 +172,6 @@ DerivedColumn1 window(over(dummy),
 
   lazy val test3: String =
     """
-        source(input+3)
+        source(1+2+input(46))+123
 """
 }
