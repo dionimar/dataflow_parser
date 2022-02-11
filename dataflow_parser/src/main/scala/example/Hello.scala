@@ -100,15 +100,18 @@ class ExpressionTokenReader(tokens: List[DataflowToken]) extends Reader[Dataflow
 object ExpressionParser extends Parsers {
   override type Elem = DataflowToken
 
-  private def id = accept("Id", { case IdentifierToken(v) => Id(v)})
+  private def id = accept("Id",
+    {
+      case IdentifierToken(v) => Id(v)
+      case LiteralToken(v)    => Id(v)
+    }
+  )
   private def number = accept("Number", { case NumberToken(n) => Number(n)})
   private def terminal: Parser[ExpressionAST] = id | number
 
 
   private def asign: Parser[ExpressionAST] = 
-    (id ~ AssignEqToken ~ (terminal | expr)) ^^ {case Id(i) ~ op ~ value => Assign(i, value)}
-
-  //private def operationSeq: Parser[ExpressionAST] = (OperationPlus ~ expr) ^^ {case _ ~ e => e}
+    (id ~ AssignEqToken ~ (expr | terminal)) ^^ {case Id(i) ~ op ~ value => Assign(i, value)}
 
   private def operation: Parser[ExpressionAST] = {
     val endOp = (OperationPlus ~ (terminal | funcCall)) ^^ {case _ ~ t => t}
@@ -126,11 +129,11 @@ object ExpressionParser extends Parsers {
     }
 
   private def expr: Parser[ExpressionAST] =
-    operation | funcCall | asign | terminal
+    operation | asign | funcCall | terminal
 
   private def step: Parser[ExpressionAST] =
-    (terminal.* ~ funcCall ~ AssignOpToken ~ terminal) ^^ {
-      case dependants ~ definition ~ _ ~ name => Transformation(dependants.toString, definition, name.toString)
+    (funcCall ~ AssignOpToken ~ terminal) ^^ {
+      case definition ~ _ ~ name => Transformation("", definition, name.toString)
     }
   
   private def program: Parser[ExpressionAST] = phrase(step)
@@ -178,11 +181,10 @@ object Hello extends Greeting with App {
 trait Greeting {
   lazy val test1: String =
     """
-aux source(output(
-        1,
-        aux + 23,
-        input(Z)
-    )) ~> source1
+window(over(dummy),
+	asc(sk, true),
+	argument1 = lag(title,1)+'-'+last(title),
+	lead(title,1)+'-'+last(title)) ~> source1
 """
 
   lazy val test2: String = 
