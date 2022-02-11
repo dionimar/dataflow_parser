@@ -41,8 +41,8 @@ object ScriptLexer extends RegexParsers {
   def separatorToken: Parser[DataflowToken] = "," ^^ (_ => SeparatorToken)
 
   def assignOpToken: Parser[DataflowToken] = """(~>){1}""".r ^^ (_ => AssignOpToken)
-  def aliasOpToken: Parser[DataflowToken] = "as" ^^ (_ => AliasOpToken)
-  def assignEqToken: Parser[DataflowToken] = """[\=]""".r ^^ (_ => AssignEqToken)
+  def aliasOpToken: Parser[DataflowToken] = """as""".r ^^ (_ => AliasOpToken)
+  def assignEqToken: Parser[DataflowToken] = """[\=]|[\:]""".r ^^ (_ => AssignEqToken)
 
   def numberToken: Parser[DataflowToken] = """\-{0,1}[0-9]+(\.){0,1}[0-9]*""".r ^^ (rep => NumberToken(rep.toFloat))
   def literalToken: Parser[DataflowToken] = """\'[a-zA-Z0-9\\-]+\'""".r ^^ (rep => LiteralToken(rep))
@@ -132,15 +132,16 @@ object ExpressionParser extends Parsers {
     operation | asign | funcCall | terminal
 
   private def step: Parser[ExpressionAST] =
-    (funcCall ~ AssignOpToken ~ terminal) ^^ {
-      case definition ~ _ ~ name => Transformation("", definition, name.toString)
+    (terminal ~ funcCall ~ AssignOpToken ~ terminal) ^^ {
+      case depends ~ definition ~ _ ~ name => Transformation(depends.toString, definition, name.toString)
     }
-  
-  private def program: Parser[ExpressionAST] = phrase(step)
+
+  private def block: Parser[ExpressionAST] = step
+  private def program: Parser[ExpressionAST] = phrase(block)
 
   def parseFromTokens(input: List[DataflowToken]) = {
     val reader = new ExpressionTokenReader(input)
-    expr(reader)
+    program(reader)
   }
 }
 
@@ -157,11 +158,11 @@ object Hello extends Greeting with App {
     case FuncCall(id, args) => {print(List.fill(indent)("\t").mkString); println("call " + id); args.map(x => printAST(indent + 1, x))}
     case Transformation(deps, definition, output) => {
       print(List.fill(indent)("\t").mkString);
-      println(deps);
+      println("inputs -> " + deps);
       print(List.fill(indent)("\t").mkString);
       printAST(indent+1, definition);
       print(List.fill(indent)("\t").mkString);
-      println(output);
+      println("output_name -> " + output);
     }
   }
 
@@ -181,10 +182,12 @@ object Hello extends Greeting with App {
 trait Greeting {
   lazy val test1: String =
     """
-window(over(dummy),
+dep window(over(dummy),
 	asc(sk, true),
 	argument1 = lag(title,1)+'-'+last(title),
-	lead(title,1)+'-'+last(title)) ~> source1
+	lead(title,1)+'-'+last(title),
+        output(sk = long),
+	startAt: 1) ~> outputname
 """
 
   lazy val test2: String = 
@@ -200,6 +203,6 @@ DerivedColumn1 window(over(dummy),
 
   lazy val test3: String =
     """
-X+f(0+1)+Z+123
+aux window(over) ~> outputname
 """
 }
