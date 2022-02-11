@@ -85,6 +85,7 @@ case class Assign(id: String, value: ExpressionAST) extends ExpressionAST
 case class Operation(op: String, arg1: ExpressionAST, arg2: ExpressionAST) extends ExpressionAST
 case class FuncCall(func: String, args: List[ExpressionAST]) extends ExpressionAST
 case class Transformation(depends: String, definition: ExpressionAST, output: String) extends ExpressionAST
+case class Blocks(transformations: List[ExpressionAST]) extends ExpressionAST
 
 
 
@@ -136,7 +137,9 @@ object ExpressionParser extends Parsers {
       case depends ~ definition ~ _ ~ name => Transformation(depends.toString, definition, name.toString)
     }
 
-  private def block: Parser[ExpressionAST] = step
+  private def block: Parser[ExpressionAST] = (step ~ step.*) ^^ {
+    case x ~ xs => Blocks(x::xs)
+  }
   private def program: Parser[ExpressionAST] = phrase(block)
 
   def parseFromTokens(input: List[DataflowToken]) = {
@@ -164,11 +167,12 @@ object Hello extends Greeting with App {
       print(List.fill(indent)("\t").mkString);
       println("output_name -> " + output);
     }
+    case Blocks(transforms) => transforms.map(elem => printAST(indent, elem))
   }
 
 
 
-  val test = test1
+  val test = test2
 
   println(test)
   val tokens = ScriptLexer.tokenize(test)
@@ -192,8 +196,8 @@ dep window(over(dummy),
 
   lazy val test2: String = 
   """
-source1 keyGenerate(output(sk as long),
-	startAt: 1L) ~> SurrogateKey1
+source1 keyGenerate(output(sk = long),
+	startAt: 1) ~> SurrogateKey1
 SurrogateKey1 derive(dummy = 1) ~> DerivedColumn1
 DerivedColumn1 window(over(dummy),
 	asc(sk, true),
