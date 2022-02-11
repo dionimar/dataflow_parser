@@ -47,9 +47,6 @@ object ScriptLexer extends RegexParsers {
   def numberToken: Parser[DataflowToken] = """\-{0,1}[0-9]+(\.){0,1}[0-9]*""".r ^^ (rep => NumberToken(rep.toFloat))
   def literalToken: Parser[DataflowToken] = """\'[a-zA-Z0-9\\-]+\'""".r ^^ (rep => LiteralToken(rep))
   def identifierToken: Parser[DataflowToken] = """[a-zA-Z]+[a-zA-Z0-9]*""".r ^^ (id => IdentifierToken(id))
-
-  //def operationToken: Parser[DataflowToken] = """(\-|\+|\=\=|&&|\|\||<|>|<\=|>\=|\=\=\=|\=\!\=)""".r ^^ (rep => OperationToken(rep))
-
   def operationEquals: Parser[DataflowToken] = """\=\=""".r ^^ (_ => OperationEquals)
   def operationPlus: Parser[DataflowToken] = """\+""".r ^^ (_ => OperationPlus)
    
@@ -172,7 +169,7 @@ object Hello extends Greeting with App {
 
 
 
-  val test = test2
+  val test = test3
 
   println(test)
   val tokens = ScriptLexer.tokenize(test)
@@ -207,6 +204,6 @@ DerivedColumn1 window(over(dummy),
 
   lazy val test3: String =
     """
-aux window(over) ~> outputname
+aux window(over+3+f(2)+g(0)+1) ~> outputname
 """
 }
