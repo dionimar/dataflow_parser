@@ -14,16 +14,18 @@ case object RightParenToken extends DataflowToken
 case object SeparatorToken extends DataflowToken
 case object LeftBraceToken extends DataflowToken
 case object RightBraceToken extends DataflowToken
+
 case object AssignOpToken extends DataflowToken
 case object AssignEqToken extends DataflowToken
+
 case object AliasOpToken extends DataflowToken
 case class LiteralToken(rep: String) extends DataflowToken
-case class OperationToken(rep: String) extends DataflowToken
 case class NumberToken(value: Float) extends DataflowToken
 
-sealed trait OperatorToken extends DataflowToken
-case object OperationEquals extends OperatorToken
-case object OperationPlus extends OperatorToken
+sealed trait Operator extends DataflowToken
+case object OperationPlus extends Operator
+case object OperationEquals extends Operator
+case object OperationSubtract extends Operator
 
 
 
@@ -47,24 +49,26 @@ object ScriptLexer extends RegexParsers {
   def numberToken: Parser[DataflowToken] = """\-{0,1}[0-9]+(\.){0,1}[0-9]*""".r ^^ (rep => NumberToken(rep.toFloat))
   def literalToken: Parser[DataflowToken] = """\'[a-zA-Z0-9\\-]+\'""".r ^^ (rep => LiteralToken(rep))
   def identifierToken: Parser[DataflowToken] = """[a-zA-Z]+[a-zA-Z0-9]*""".r ^^ (id => IdentifierToken(id))
+
   def operationEquals: Parser[DataflowToken] = """\=\=""".r ^^ (_ => OperationEquals)
   def operationPlus: Parser[DataflowToken] = """\+""".r ^^ (_ => OperationPlus)
+  def operationSubtract: Parser[DataflowToken] = """\-""".r ^^ (_ => OperationSubtract)
    
-  private def tokens: Parser[List[DataflowToken]] =
+  private def tokens: Parser[List[DataflowToken]] = // should be sorted by length to avoid early recognition
     phrase(
       rep1(identifierToken |
-        leftParenToken |
-        rightParenToken|
-        leftBraceToken |
-        rightBraceToken|
-        separatorToken |
-        assignOpToken  |
-        assignEqToken  |
-        aliasOpToken   |
-        literalToken   |
-        //operationToken |
-        operationEquals |
-        operationPlus  |
+        leftParenToken     |
+        rightParenToken    |
+        leftBraceToken     |
+        rightBraceToken    |
+        separatorToken     |
+        operationEquals    |
+        assignOpToken      |
+        assignEqToken      |
+        aliasOpToken       |
+        literalToken       |
+        operationPlus      |
+        operationSubtract  |
         numberToken
       )
     )
@@ -112,11 +116,16 @@ object ExpressionParser extends Parsers {
     (id ~ AssignEqToken ~ (expr | terminal)) ^^ {case Id(i) ~ op ~ value => Assign(i, value)}
 
   private def operation: Parser[ExpressionAST] = {
-    val endOp = (OperationPlus ~ (terminal | funcCall)) ^^ {case _ ~ t => t}
-    val opAdd = (funcCall | terminal) ~ OperationPlus ~ (endOp | expr) ^^ {
-      case i ~ _ ~ ex => Operation("Add", i, ex)
+    val opOptions = (OperationPlus | OperationSubtract | OperationEquals)
+    val endOp = (opOptions ~ (terminal | funcCall)) ^^ {case _ ~ t => t}
+
+    (funcCall | terminal) ~ opOptions ~ (endOp | expr) ^^ {
+      case i ~ op ~ ex => op match {
+        case OperationPlus     => Operation("Add", i, ex)
+        case OperationSubtract => Operation("Sub", i, ex)
+        case OperationEquals   => Operation("Eq", i, ex)
+      }
     }
-    opAdd
   }
 
   private def arg: Parser[ExpressionAST] = (SeparatorToken ~ expr) ^^ {case _ ~ e => e}
@@ -141,7 +150,7 @@ object ExpressionParser extends Parsers {
 
   def parseFromTokens(input: List[DataflowToken]) = {
     val reader = new ExpressionTokenReader(input)
-    program(reader)
+    expr(reader)
   }
 }
 
@@ -169,7 +178,7 @@ object Hello extends Greeting with App {
 
 
 
-  val test = test3
+  val test = test4
 
   println(test)
   val tokens = ScriptLexer.tokenize(test)
@@ -205,5 +214,10 @@ DerivedColumn1 window(over(dummy),
   lazy val test3: String =
     """
 aux window(over+3+f(2)+g(0)+1) ~> outputname
+"""
+
+  lazy val test4: String =
+    """
+1+2-3 == 0
 """
 }
