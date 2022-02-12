@@ -153,7 +153,7 @@ object ExpressionParser extends Parsers {
 
   def parseFromTokens(input: List[DataflowToken]) = {
     val reader = new ExpressionTokenReader(input)
-    expr(reader)
+    program(reader)
   }
 }
 
@@ -181,7 +181,7 @@ object Hello extends Greeting with App {
 
 
 
-  val test = test4
+  val test = test3
 
   println(test)
   val tokens = ScriptLexer.tokenize(test)
@@ -216,7 +216,7 @@ DerivedColumn1 window(over(dummy),
 
   lazy val test3: String =
     """
-aux window(over+3+f(2)+g(0)+1) ~> outputname
+aux window(over+3+f(2)+g(0)-1) ~> outputname
 """
 
   lazy val test4: String =
