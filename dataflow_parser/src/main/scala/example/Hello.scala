@@ -22,10 +22,10 @@ case object AliasOpToken extends DataflowToken
 case class LiteralToken(rep: String) extends DataflowToken
 case class NumberToken(value: Float) extends DataflowToken
 
-sealed trait Operator extends DataflowToken
-case object OperationPlus extends Operator
-case object OperationEquals extends Operator
-case object OperationSubtract extends Operator
+sealed trait OperatorToken extends DataflowToken
+case object OperationPlus extends OperatorToken
+case object OperationEquals extends OperatorToken
+case object OperationSubtract extends OperatorToken
 
 
 
@@ -77,13 +77,16 @@ object ScriptLexer extends RegexParsers {
 }
 
 
-
+sealed trait OperatorFunc
+case object Sub extends OperatorFunc
+case object Add extends OperatorFunc
+case object Eqq extends OperatorFunc
 
 sealed trait ExpressionAST
 case class Id(value: String) extends ExpressionAST
 case class Number(value: Float) extends ExpressionAST
 case class Assign(id: String, value: ExpressionAST) extends ExpressionAST
-case class Operation(op: String, arg1: ExpressionAST, arg2: ExpressionAST) extends ExpressionAST
+case class Operation(op: OperatorFunc, arg1: ExpressionAST, arg2: ExpressionAST) extends ExpressionAST
 case class FuncCall(func: String, args: List[ExpressionAST]) extends ExpressionAST
 case class Transformation(depends: String, definition: ExpressionAST, output: String) extends ExpressionAST
 case class Blocks(transformations: List[ExpressionAST]) extends ExpressionAST
@@ -121,9 +124,9 @@ object ExpressionParser extends Parsers {
 
     (funcCall | terminal) ~ opOptions ~ (endOp | expr) ^^ {
       case i ~ op ~ ex => op match {
-        case OperationPlus     => Operation("Add", i, ex)
-        case OperationSubtract => Operation("Sub", i, ex)
-        case OperationEquals   => Operation("Eq", i, ex)
+        case OperationPlus     => Operation(Add, i, ex)
+        case OperationSubtract => Operation(Sub, i, ex)
+        case OperationEquals   => Operation(Eqq, i, ex)
       }
     }
   }
