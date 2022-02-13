@@ -29,6 +29,8 @@ object ScriptLexer extends RegexParsers {
   def operationEquals: Parser[DataflowToken]   = """\=\=""".r ^^ (_ => OperationEquals)
   def operationPlus: Parser[DataflowToken]     = """\+""".r ^^ (_ => OperationPlus)
   def operationSubtract: Parser[DataflowToken] = """\-""".r ^^ (_ => OperationSubtract)
+  def operationAnd: Parser[DataflowToken]      = """\&\&""".r ^^(_ => OperationAnd)
+  def operationOr: Parser[DataflowToken]       = """\|\|""".r ^^(_ => OperationOr)
    
   private def tokens: Parser[List[DataflowToken]] = // should be sorted by length to avoid early recognition
     phrase(
@@ -45,6 +47,8 @@ object ScriptLexer extends RegexParsers {
         literalToken       |
         operationPlus      |
         operationSubtract  |
+        operationAnd       |
+        operationOr        |
         numberToken
       )
     )

@@ -26,7 +26,7 @@ object ExpressionParser extends Parsers {
     (id ~ AssignEqToken ~ (expr | terminal)) ^^ {case Id(i) ~ op ~ value => Assign(i, value)}
 
   private def operation: Parser[ExpressionAST] = {
-    val opOptions = (OperationPlus | OperationSubtract | OperationEquals)
+    val opOptions = (OperationPlus | OperationSubtract | OperationEquals | OperationAnd | OperationOr)
     val endOp = (opOptions ~ (terminal | funcCall)) ^^ {case _ ~ t => t}
 
     (funcCall | terminal) ~ opOptions ~ (endOp | expr) ^^ {
@@ -34,6 +34,9 @@ object ExpressionParser extends Parsers {
         case OperationPlus     => Operation(Add, i, ex)
         case OperationSubtract => Operation(Sub, i, ex)
         case OperationEquals   => Operation(Eqq, i, ex)
+        case OperationOr       => Operation(Or, i, ex)
+        case OperationAnd      => Operation(And, i, ex)
+
       }
     }
   }

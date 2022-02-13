@@ -43,7 +43,7 @@ object TreePrinter {
 
 
 object StringParser extends Inputs with App {
-  val test = test1
+  val test = test4
 
   println(test)
   val tokens = ScriptLexer.tokenize(test)
@@ -88,6 +88,6 @@ aux window(over+3+f(2)+g(0)-1) ~> outputname
 
   lazy val test4: String =
     """
-1+2-3 == 0
+aux f(1+2-3 == 0 || 1 && d) ~> aux
 """
 }

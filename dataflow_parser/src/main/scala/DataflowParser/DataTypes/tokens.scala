@@ -19,3 +19,5 @@ sealed trait OperatorToken extends DataflowToken
 case object OperationPlus extends OperatorToken
 case object OperationEquals extends OperatorToken
 case object OperationSubtract extends OperatorToken
+case object OperationAnd extends OperatorToken
+case object OperationOr extends OperatorToken

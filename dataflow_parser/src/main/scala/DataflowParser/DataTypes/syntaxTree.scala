@@ -5,6 +5,8 @@ sealed trait OperatorFunc
 case object Sub extends OperatorFunc
 case object Add extends OperatorFunc
 case object Eqq extends OperatorFunc
+case object And extends OperatorFunc
+case object Or  extends OperatorFunc
 
 sealed trait ExpressionAST
 case class Id(value: String) extends ExpressionAST
