@@ -48,7 +48,9 @@ object StringParser extends Inputs with App {
   println(test)
   val tokens = ScriptLexer.tokenize(test).toOption
 
-  //println(tokens)
+
+
+
 
 
   import DataflowParser.SyntaxTree._
@@ -65,16 +67,6 @@ object StringParser extends Inputs with App {
     ))
     
 
-  // tokens match {
-  //   case Left(msg) => println(msg)
-  //   case Right(listTokens) => 
-  //     ExpressionParser.parseFromTokens(listTokens) match {
-  //       case Left(msg) => println(msg)
-  //       case Right(syntaxAST) => 
-  //     }
-      
-    
-  // }
   
 }
 
