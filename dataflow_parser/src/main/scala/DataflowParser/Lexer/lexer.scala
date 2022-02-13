@@ -1,10 +1,11 @@
 package DataflowParser.Lexer
 
-import scala.util.parsing.combinator._
+import scala.util.parsing.combinator.{RegexParsers, Parsers}
 import scala.util.parsing.input.{NoPosition, Position, Reader}
 import scala.util.matching.Regex
 
 import DataflowParser.Tokens._
+
 
 
 object ScriptLexer extends RegexParsers {
@@ -53,7 +54,12 @@ object ScriptLexer extends RegexParsers {
       )
     )
 
-  def tokenize(script: String): ParseResult[List[DataflowToken]] = parse(tokens, script)
+  def tokenize(script: String): Either[String, List[DataflowToken]] =
+    parse(tokens, script) match {
+      case Success(result, _) => Right(result)
+      case Failure(msg, _)    => Left(msg)
+      case Error(msg, _)      => Left(msg)
+    }
 }
 
 
@@ -63,3 +69,6 @@ class ExpressionTokenReader(tokens: List[DataflowToken]) extends Reader[Dataflow
   def pos: Position = NoPosition
   def rest: Reader[DataflowToken] = new ExpressionTokenReader(tokens.tail)
 }
+
+
+

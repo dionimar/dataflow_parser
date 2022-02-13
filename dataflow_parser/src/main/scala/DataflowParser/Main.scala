@@ -9,30 +9,30 @@ import DataflowParser.Parser.ExpressionParser
 object TreePrinter {
   import DataflowParser.SyntaxTree._
 
-  def printAST(indent: Integer, ast: ExpressionAST): Unit = {
+  def printAST(indent: Integer)(ast: ExpressionAST): Unit = {
     def identFun(out: String): Unit = println(List.fill(indent)("  ").mkString + out)
     ast match {
       case Id(name) => identFun(name)
       case Number(n) => identFun(n.toString)
       case Assign(id, expr) => {
         identFun(id)
-        printAST(indent + 1, expr)
+        printAST(indent + 1)(expr)
       }
       case Operation(op, ex1, ex2) => {
         identFun(op.toString)
-        printAST(indent + 1, ex1)
-        printAST(indent + 1, ex2)
+        printAST(indent + 1)(ex1)
+        printAST(indent + 1)(ex2)
       }
       case FuncCall(id, args) => {
         identFun("call " + id.toString)
-        args.map(x => printAST(indent + 1, x))
+        args.map(x => printAST(indent + 1)(x))
       }
       case Transformation(deps, definition, output) => {
         identFun("inputs -> " + deps);
-        printAST(indent + 1, definition);
+        printAST(indent + 1)(definition);
         identFun("output_name -> " + output);
       }
-      case Blocks(transforms) => transforms.map(elem => printAST(indent, elem))
+      case Blocks(transforms) => transforms.map(elem => printAST(indent)(elem))
     }
   }
 }
@@ -43,15 +43,39 @@ object TreePrinter {
 
 
 object StringParser extends Inputs with App {
-  val test = test4
+  val test = test2
 
   println(test)
-  val tokens = ScriptLexer.tokenize(test)
-  println(tokens)
-  tokens.map(
-    tks => ExpressionParser.parseFromTokens(tks)
-  )
-  .map(_.map(x => TreePrinter.printAST(0,x)))
+  val tokens = ScriptLexer.tokenize(test).toOption
+
+  //println(tokens)
+
+
+  import DataflowParser.SyntaxTree._
+
+  val transformations = tokens
+    .flatMap(ExpressionParser.parseFromTokens(_).toOption)
+    .map(x => x match {case Blocks(trans) => trans})
+
+  transformations
+    .map(_.map(
+      _ match {
+        case Transformation(dep, _, out) => println(dep + " -> Some operations -> " + out)
+      }
+    ))
+    
+
+  // tokens match {
+  //   case Left(msg) => println(msg)
+  //   case Right(listTokens) => 
+  //     ExpressionParser.parseFromTokens(listTokens) match {
+  //       case Left(msg) => println(msg)
+  //       case Right(syntaxAST) => 
+  //     }
+      
+    
+  // }
+  
 }
 
 

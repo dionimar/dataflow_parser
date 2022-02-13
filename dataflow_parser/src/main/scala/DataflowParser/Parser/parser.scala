@@ -6,6 +6,7 @@ import DataflowParser.Tokens._
 import DataflowParser.SyntaxTree._
 
 import DataflowParser.Lexer._
+import scala.util.Failure
 
 
 
@@ -62,8 +63,12 @@ object ExpressionParser extends Parsers {
   }
   private def program: Parser[ExpressionAST] = phrase(block)
 
-  def parseFromTokens(input: List[DataflowToken]) = {
+  def parseFromTokens(input: List[DataflowToken]): Either[String, ExpressionAST] = {
     val reader = new ExpressionTokenReader(input)
-    program(reader)
+    program(reader) match {
+      case Success(result, _) => Right(result)
+      case Failure(msg, _)    => Left(msg)
+      case Error(msg, _)      => Left(msg)
+    }
   }
 }
