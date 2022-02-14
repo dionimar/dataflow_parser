@@ -43,31 +43,43 @@ object TreePrinter {
 
 
 object StringParser extends Inputs with App {
-  val test = test4
-
-  println(test)
-  val tokens = ScriptLexer.tokenize(test).toOption
 
 
 
 
-  println(tokens)
+  def performTest(test: String) = {
+    println(test)
+    val tokens = ScriptLexer.tokenize(test).toOption
 
-  import DataflowParser.SyntaxTree._
 
-  val transformations = tokens
-    .flatMap(ExpressionParser.parseFromTokens(_).toOption)
-    .map(x => x match {case Blocks(trans) => trans})
 
-  transformations
-    .map(_.map(
-      _ match {
-        case Transformation(dep, _, out) => println(dep + " -> Some operations -> " + out)
-      }
-    ))
-    
 
-  
+    //println(tokens)
+
+    import DataflowParser.SyntaxTree._
+
+    val transformations = tokens
+      .flatMap(ExpressionParser.parseFromTokens(_).toOption)
+      .map(x => x match {case Blocks(trans) => trans})
+
+    //println(transformations)
+
+    // transformations
+    //   .map(_.map(
+    //     _ match {
+    //       case Transformation(dep, _, out) => println(dep + " -> Some operations -> " + out)
+    //     }
+    //   ))
+
+    transformations.map(_.map(TreePrinter.printAST(0)(_)))
+
+  }
+
+
+
+
+  List(test_1, test_2, test_3).map(performTest)
+
 }
 
 
@@ -99,12 +111,30 @@ DerivedColumn1 window(over(dummy),
 
   lazy val test3: String =
     """
-aux window(over+3+f(2)+g(0)-1) ~> outputname
+window(over+3+f(2)+g(0)-1) ~> outputname
 """
 
   lazy val test4: String =
     """
 a f(1) ~> aux
+a, b f(1) ~> aux
+f(1) ~> aux
+"""
+
+
+
+  lazy val test_1: String =
+        """
+f() ~> aux
+"""
+
+  lazy val test_2: String =
+        """
+a f(1) ~> aux
+"""
+
+  lazy val test_3: String =
+        """
 a, b f(1) ~> aux
 """
 }
