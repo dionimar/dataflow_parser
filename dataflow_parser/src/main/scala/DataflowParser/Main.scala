@@ -63,11 +63,11 @@ object StringParser extends Inputs with App {
 
   //List(test_2).map(performTest)
   List(
-    test1
+    //test1
     // test2,
     // test3,
     // test_1,
-    // test_2,
+    test_2
     // test_3,
     // test_4,
     // test_5
@@ -123,10 +123,8 @@ f() ~> aux
 
   lazy val test_2: String =
         """
-a f(2-11-23+123) ~> aux
-a f(-2-11-23+123) ~> aux
-a f(-2-11%23/123) ~> aux
-a f(-2-11-23/1*23) ~> aux
+a f(2-1) ~> aux
+a f(-1) ~> aux
 """
 
   lazy val test_3: String =
