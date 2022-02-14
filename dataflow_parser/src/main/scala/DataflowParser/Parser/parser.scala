@@ -45,22 +45,38 @@ object ExpressionParser extends Parsers {
 
   private def arg: Parser[ExpressionAST] = (SeparatorToken ~ expr) ^^ {case _ ~ e => e}
 
-  private def funcCall: Parser[ExpressionAST] =
+  private def funcCallWithoutArgs: Parser[ExpressionAST] =
+    (id ~ LeftParenToken ~ RightParenToken) ^^ {
+      case Id(i) ~ _ ~ _ => FuncCall(i, List())
+    }
+
+  private def funcCallWithArgs: Parser[ExpressionAST] =
     (id ~ LeftParenToken ~ expr ~ (arg.*) ~ RightParenToken) ^^ {
       case Id(i) ~ _ ~ ex1 ~ rest ~ _ => FuncCall(i, ex1 :: rest)
     }
 
+  private def funcCall: Parser[ExpressionAST] = (funcCallWithArgs | funcCallWithoutArgs)
+
   private def expr: Parser[ExpressionAST] =
     operation | asign | funcCall | terminal
 
-  private def step: Parser[ExpressionAST] ={
-    //val optionalArg = terminal.? ~log(terminal)("Match singlearg")
-    val multipleArgs = (SeparatorToken ~> terminal).* ^^ {case e => e}
-    (opt(terminal ~ multipleArgs) ~ funcCall ~ AssignOpToken ~ terminal) ^^ {
-      case Some(depends ~ rest) ~ definition ~ _ ~ name => Transformation((depends::rest).toString, definition, name.toString)
-      case None ~ definition ~ _ ~ name       => Transformation("", definition, name.toString)
+
+  private def inputStep: Parser[ExpressionAST] ={   
+    (funcCall ~ AssignOpToken ~ terminal) ^^ {
+      case definition ~ _ ~ name => Transformation("", definition, name.toString)
     }
   }
+
+  private def fullStep: Parser[ExpressionAST] ={
+    val multipleArgs = (SeparatorToken ~> terminal).*
+    val arguments = terminal ~ multipleArgs
+    
+    (arguments ~ funcCall ~ AssignOpToken ~ terminal) ^^ {
+      case depends ~ rest ~ definition ~ _ ~ name => Transformation((depends::rest).toString, definition, name.toString)
+    }
+  }
+
+  private def step: Parser[ExpressionAST] = (fullStep | inputStep)
 
   private def block: Parser[ExpressionAST] = (step ~ step.*) ^^ {
     case x ~ xs => Blocks(x::xs)
