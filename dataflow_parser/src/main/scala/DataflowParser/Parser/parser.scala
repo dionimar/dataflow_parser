@@ -55,10 +55,10 @@ object ExpressionParser extends Parsers {
 
   private def step: Parser[ExpressionAST] ={
     //val optionalArg = terminal.? ~log(terminal)("Match singlearg")
-    val multipleArgs = rep(SeparatorToken ~> terminal)
-    ((terminal ~ multipleArgs).? ~ funcCall ~ AssignOpToken ~ terminal) ^^ {
-      case depends ~ definition ~ _ ~ name => Transformation(depends.toString, definition, name.toString)
-      case _ ~ definition ~ _ ~ name       => Transformation("", definition, name.toString)
+    val multipleArgs = (SeparatorToken ~> terminal).* ^^ {case e => e}
+    (opt(terminal ~ multipleArgs) ~ funcCall ~ AssignOpToken ~ terminal) ^^ {
+      case Some(depends ~ rest) ~ definition ~ _ ~ name => Transformation((depends::rest).toString, definition, name.toString)
+      case None ~ definition ~ _ ~ name       => Transformation("", definition, name.toString)
     }
   }
 
