@@ -24,7 +24,7 @@ object ExpressionParser extends Parsers {
 
 
   private def asign: Parser[ExpressionAST] = 
-    (id ~ AssignEqToken ~ (expr | terminal)) ^^ {case Id(i) ~ op ~ value => Assign(i, value)}
+    (id ~ AssignEqToken ~ (expr | terminal)) ^^ {case Id(i) ~ op ~ value => Assign(Id(i), value)}
 
   private def operation: Parser[ExpressionAST] = {
     val opOptions =
@@ -56,12 +56,12 @@ object ExpressionParser extends Parsers {
 
   private def funcCallWithoutArgs: Parser[ExpressionAST] =
     (id ~ LeftParenToken ~ RightParenToken) ^^ {
-      case Id(i) ~ _ ~ _ => FuncCall(i, List())
+      case Id(i) ~ _ ~ _ => FuncCall(Id(i), List())
     }
 
   private def funcCallWithArgs: Parser[ExpressionAST] =
     (id ~ LeftParenToken ~ expr ~ (arg.*) ~ RightParenToken) ^^ {
-      case Id(i) ~ _ ~ ex1 ~ rest ~ _ => FuncCall(i, ex1 :: rest)
+      case Id(i) ~ _ ~ ex1 ~ rest ~ _ => FuncCall(Id(i), ex1 :: rest)
     }
 
   private def funcCall: Parser[ExpressionAST] = (funcCallWithArgs | funcCallWithoutArgs)
@@ -72,7 +72,7 @@ object ExpressionParser extends Parsers {
 
   private def inputStep: Parser[ExpressionAST] ={   
     (funcCall ~ AssignOpToken ~ terminal) ^^ {
-      case definition ~ _ ~ name => Transformation("", definition, name.toString)
+      case definition ~ _ ~ name => Transformation(List(EmptyAST), definition, name)
     }
   }
 
@@ -81,7 +81,7 @@ object ExpressionParser extends Parsers {
     val arguments = terminal ~ multipleArgs
     
     (arguments ~ funcCall ~ AssignOpToken ~ terminal) ^^ {
-      case depends ~ rest ~ definition ~ _ ~ name => Transformation((depends::rest).toString, definition, name.toString)
+      case depends ~ rest ~ definition ~ _ ~ name => Transformation(depends::rest, definition, name)
     }
   }
 

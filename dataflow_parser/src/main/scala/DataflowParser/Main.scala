@@ -10,12 +10,12 @@ object TreePrinter {
   import DataflowParser.SyntaxTree._
 
   def printAST(indent: Integer)(ast: ExpressionAST): Unit = {
-    def identFun(out: String): Unit = println(List.fill(indent)("  ").mkString + out)
+    def identFun(out: String): Unit =  println(List.fill(indent)("  ").mkString + out)
     ast match {
       case Id(name) => identFun(name)
       case Number(n) => identFun(n.toString)
       case Assign(id, expr) => {
-        identFun(id)
+        identFun(id + " <- ")
         printAST(indent + 1)(expr)
       }
       case Operation(op, ex1, ex2) => {
@@ -28,9 +28,9 @@ object TreePrinter {
         args.map(x => printAST(indent + 1)(x))
       }
       case Transformation(deps, definition, output) => {
-        identFun("inputs -> " + deps);
-        printAST(indent + 1)(definition);
-        identFun("output_name -> " + output);
+        identFun("inputs -> " + deps)
+        printAST(indent + 1)(definition)
+        identFun("output_name -> " + output)
       }
       case Blocks(transforms) => transforms.map(elem => printAST(indent)(elem))
     }
@@ -50,36 +50,28 @@ object StringParser extends Inputs with App {
   def performTest(test: String) = {
     println(test)
     val tokens = ScriptLexer.tokenize(test).toOption
-
-
-
-
-    println(tokens)
+    //println(tokens)
 
     import DataflowParser.SyntaxTree._
 
     val transformations = tokens
       .flatMap(ExpressionParser.parseFromTokens(_).toOption)
       .map(x => x match {case Blocks(trans) => trans})
-
-    //println(transformations)
-
-    // transformations
-    //   .map(_.map(
-    //     _ match {
-    //       case Transformation(dep, _, out) => println(dep + " -> Some operations -> " + out)
-    //     }
-    //   ))
-
+    println(transformations)
     transformations.map(_.map(TreePrinter.printAST(0)(_)))
-
   }
 
-
-
-
-  List(test_2).map(performTest)
-  //List(test_4, test_5).map(performTest)
+  //List(test_2).map(performTest)
+  List(
+    test1
+    // test2,
+    // test3,
+    // test_1,
+    // test_2,
+    // test_3,
+    // test_4,
+    // test_5
+  ).map(performTest)
 
 }
 
