@@ -43,7 +43,7 @@ object TreePrinter {
 
 
 object StringParser extends Inputs with App {
-  val test = test2
+  val test = test4
 
   println(test)
   val tokens = ScriptLexer.tokenize(test).toOption
@@ -51,7 +51,7 @@ object StringParser extends Inputs with App {
 
 
 
-
+  println(tokens)
 
   import DataflowParser.SyntaxTree._
 
@@ -88,7 +88,7 @@ dep window(over(dummy),
 
   lazy val test2: String = 
   """
-source1 keyGenerate(output(sk = long),
+a, b, c keyGenerate(output(sk = long),
 	startAt: 1) ~> SurrogateKey1
 SurrogateKey1 derive(dummy = 1) ~> DerivedColumn1
 DerivedColumn1 window(over(dummy),
@@ -104,6 +104,7 @@ aux window(over+3+f(2)+g(0)-1) ~> outputname
 
   lazy val test4: String =
     """
-aux f(1+2-3 == 0 || 1 && d) ~> aux
+a f(1) ~> aux
+a, b f(1) ~> aux
 """
 }

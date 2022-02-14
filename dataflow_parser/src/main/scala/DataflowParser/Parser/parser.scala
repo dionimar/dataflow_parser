@@ -53,10 +53,14 @@ object ExpressionParser extends Parsers {
   private def expr: Parser[ExpressionAST] =
     operation | asign | funcCall | terminal
 
-  private def step: Parser[ExpressionAST] =
-    (terminal ~ funcCall ~ AssignOpToken ~ terminal) ^^ {
+  private def step: Parser[ExpressionAST] ={
+    //val optionalArg = terminal.? ~log(terminal)("Match singlearg")
+    val multipleArgs = rep(SeparatorToken ~> terminal)
+    ((terminal ~ multipleArgs).? ~ funcCall ~ AssignOpToken ~ terminal) ^^ {
       case depends ~ definition ~ _ ~ name => Transformation(depends.toString, definition, name.toString)
+      case _ ~ definition ~ _ ~ name       => Transformation("", definition, name.toString)
     }
+  }
 
   private def block: Parser[ExpressionAST] = (step ~ step.*) ^^ {
     case x ~ xs => Blocks(x::xs)
