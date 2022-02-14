@@ -28,18 +28,27 @@ object ExpressionParser extends Parsers {
 
   private def operation: Parser[ExpressionAST] = {
     val opOptions =
-      (OperationPlus | OperationSubtract | OperationEquals | OperationAnd | OperationOr)
+      (OperationPlus | OperationSubtract | OperationEquals | OperationAnd | OperationOr
+        | OperationDiv | OperationProd | OperationMod
+      )
 
     val endOp = (opOptions ~ (terminal | funcCall)) ^^ {case _ ~ t => t}
 
-    (funcCall | terminal) ~ opOptions ~ (endOp | expr) ^^ {
-      case i ~ op ~ ex => op match {
+    opt(funcCall | terminal) ~ opOptions ~ (endOp | expr) ^^ {
+      case Some(i) ~ op ~ ex => op match {
         case OperationPlus     => Operation(Add, i, ex)
         case OperationSubtract => Operation(Sub, i, ex)
+        case OperationLEq      => Operation(LEq, i, ex)
+        case OperationGEq      => Operation(GEq, i, ex)
+        case OperationLess     => Operation(Less, i, ex)
+        case OperationGreat    => Operation(Great, i, ex)
         case OperationEquals   => Operation(Eqq, i, ex)
         case OperationOr       => Operation(Or, i, ex)
-        case OperationAnd      => Operation(And, i, ex)
-      }
+        case OperationDiv      => Operation(Div, i, ex)
+        case OperationProd     => Operation(Prod, i, ex)
+        case OperationMod      => Operation(Mod, i, ex)
+        case OperationAnd      => Operation(And, i, ex)}
+      case None ~ OperationSubtract ~ ex => Operation(Sub, Number(0), ex)
     }
   }
 

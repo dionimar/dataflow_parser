@@ -18,6 +18,13 @@ case class NumberToken(value: Float) extends DataflowToken
 sealed trait OperatorToken extends DataflowToken
 case object OperationPlus extends OperatorToken
 case object OperationEquals extends OperatorToken
+case object OperationLEq extends OperatorToken
+case object OperationGEq extends OperatorToken
+case object OperationLess extends OperatorToken
+case object OperationGreat extends OperatorToken
 case object OperationSubtract extends OperatorToken
 case object OperationAnd extends OperatorToken
 case object OperationOr extends OperatorToken
+case object OperationDiv extends OperatorToken
+case object OperationProd extends OperatorToken
+case object OperationMod extends OperatorToken

@@ -7,6 +7,13 @@ case object Add extends OperatorFunc
 case object Eqq extends OperatorFunc
 case object And extends OperatorFunc
 case object Or  extends OperatorFunc
+case object LEq extends OperatorFunc
+case object GEq extends OperatorFunc
+case object Great extends OperatorFunc
+case object Less extends OperatorFunc
+case object Prod extends OperatorFunc
+case object Div extends OperatorFunc
+case object Mod extends OperatorFunc
 
 sealed trait ExpressionAST
 case class Id(value: String) extends ExpressionAST

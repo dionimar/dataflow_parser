@@ -54,7 +54,7 @@ object StringParser extends Inputs with App {
 
 
 
-    //println(tokens)
+    println(tokens)
 
     import DataflowParser.SyntaxTree._
 
@@ -78,7 +78,8 @@ object StringParser extends Inputs with App {
 
 
 
-  List(test_1, test_2, test_3).map(performTest)
+  List(test_2).map(performTest)
+  //List(test_4, test_5).map(performTest)
 
 }
 
@@ -130,11 +131,29 @@ f() ~> aux
 
   lazy val test_2: String =
         """
-a f(1) ~> aux
+a f(2-11-23+123) ~> aux
+a f(-2-11-23+123) ~> aux
+a f(-2-11%23/123) ~> aux
+a f(-2-11-23/1*23) ~> aux
 """
 
   lazy val test_3: String =
         """
 a, b f(1) ~> aux
+"""
+
+
+  lazy val test_4 =
+    """ 
+Join2 derive(edad = abs(toInterger(divide(mothsBetween({b.neo_fechadenacimiento}, currentDate()), 12)))) ~> DerviedColumn2
+"""
+  lazy val test_5 = """
+DerivedColumn2 derive(Grupo_Edad = case(
+    edad < 18, 1, 
+    edad, 18, 0, -1
+), 
+Junta_Provincial = iif(isNull({pro.neo_codigo}), -1, toInteger({pro.neo_codigo})),
+Beneficiario = {b.beneficiario} + '_ADA/Respirapp'
+) ~> DerivedColumn3
 """
 }
