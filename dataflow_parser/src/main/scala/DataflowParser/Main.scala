@@ -50,7 +50,7 @@ object StringParser extends Inputs with App {
   def performTest(test: String) = {
     println(test)
     val tokens = ScriptLexer.tokenize(test).toOption
-    //println(tokens)
+    println(tokens)
 
     import DataflowParser.SyntaxTree._
 
@@ -65,9 +65,9 @@ object StringParser extends Inputs with App {
   List(
     //test1
     // test2,
-    // test3,
+    test3
     // test_1,
-    test_2
+    //test_2
     // test_3,
     // test_4,
     // test_5
@@ -104,7 +104,16 @@ DerivedColumn1 window(over(dummy),
 
   lazy val test3: String =
     """
-window(over+3+f(2)+g(0)-1) ~> outputname
+ource(output(
+		movieId as string,
+		title as string,
+		genres as string
+	),
+	allowSchemaDrift: true,
+	validateSchema: false) ~> source1
+source1 derive(upperCaseTitle = upper(title)) ~> deriveTransformationName
+source1 sink(allowSchemaDrift: true,
+	validateSchema: false) ~> sink1
 """
 
   lazy val test4: String =

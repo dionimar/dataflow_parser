@@ -24,7 +24,10 @@ object ExpressionParser extends Parsers {
 
 
   private def asign: Parser[ExpressionAST] = 
-    (id ~ AssignEqToken ~ (expr | terminal)) ^^ {case Id(i) ~ op ~ value => Assign(Id(i), value)}
+    (id ~ (AssignEqToken | id) ~ (expr | terminal)) ^^ {
+      case Id(i) ~ Id("as") ~ value => Assign(Id(i), value)
+      case Id(i) ~ _        ~ value => Assign(Id(i), value)
+    }
 
   private def operation: Parser[ExpressionAST] = {
     val opOptions =

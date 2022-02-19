@@ -20,7 +20,7 @@ object ScriptLexer extends RegexParsers {
   def separatorToken: Parser[DataflowToken]    = "," ^^ (_ => SeparatorToken)
 
   def assignOpToken: Parser[DataflowToken]     = """(~>){1}""".r ^^ (_ => AssignOpToken)
-  def aliasOpToken: Parser[DataflowToken]      = """as""".r ^^ (_ => AliasOpToken)
+  def aliasOpToken: Parser[DataflowToken]      = """as""" ^^ (_ => AliasOpToken)
   def assignEqToken: Parser[DataflowToken]     = """[\=]|[\:]""".r ^^ (_ => AssignEqToken)
 
   def numberToken: Parser[DataflowToken]       = """[0-9]+(\.){0,1}[0-9]*""".r ^^ (rep => NumberToken(rep.toFloat))
