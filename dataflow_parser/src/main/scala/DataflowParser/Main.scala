@@ -15,8 +15,8 @@ object TreePrinter {
       case Id(name) => identFun(name)
       case Number(n) => identFun(n.toString)
       case Assign(id, expr) => {
-        identFun(id + " <- ")
-        printAST(indent + 1)(expr)
+        print(List.fill(indent)("  ").mkString + id + " <- ")
+        printAST(0)(expr)
       }
       case Operation(op, ex1, ex2) => {
         identFun(op.toString)
