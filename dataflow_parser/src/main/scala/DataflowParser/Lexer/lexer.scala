@@ -25,20 +25,20 @@ object ScriptLexer extends RegexParsers {
 
   def numberToken: Parser[DataflowToken]       = """[0-9]+(\.){0,1}[0-9]*""".r ^^ (rep => NumberToken(rep.toFloat))
   def literalToken: Parser[DataflowToken]      = """\'.*\'""".r ^^ (rep => LiteralToken(rep))
-  def identifierToken: Parser[DataflowToken]   = """\{{0,1}[a-zA-Z]+[a-zA-Z0-9\.\_]*\}{0,1}""".r ^^ (id => IdentifierToken(id))
+  def identifierToken: Parser[DataflowToken]   = """(\{{0,1}[a-zA-Z]+[a-zA-Z0-9\.\_]*\}{0,1})|(\$\$)""".r ^^ (id => IdentifierToken(id))
 
-  def operationEquals: Parser[DataflowToken]   = """\=\=""".r ^^ (_ => OperationEquals)
-  def operationLEq: Parser[DataflowToken]   = """\<\=""".r ^^ (_ => OperationLEq)
-  def operationGEq: Parser[DataflowToken]   = """\>\=""".r ^^ (_ => OperationGEq)
-  def operationLess: Parser[DataflowToken]   = """\<""".r ^^ (_ => OperationLess)
-  def operationGreat: Parser[DataflowToken]   = """\>""".r ^^ (_ => OperationGreat)
+  def operationEquals: Parser[DataflowToken]   = """==""" ^^ (_ => OperationEquals)
+  def operationLEq: Parser[DataflowToken]      = """\<\=""".r ^^ (_ => OperationLEq)
+  def operationGEq: Parser[DataflowToken]      = """\>\=""".r ^^ (_ => OperationGEq)
+  def operationLess: Parser[DataflowToken]     = """\<""".r ^^ (_ => OperationLess)
+  def operationGreat: Parser[DataflowToken]    = """\>""".r ^^ (_ => OperationGreat)
   def operationPlus: Parser[DataflowToken]     = """\+""".r ^^ (_ => OperationPlus)
   def operationSubtract: Parser[DataflowToken] = """\-""".r ^^ (_ => OperationSubtract)
-  def operationDiv: Parser[DataflowToken] = """\/""".r ^^ (_ => OperationDiv)
-  def operationProd: Parser[DataflowToken] = """\*""".r ^^ (_ => OperationProd)
-  def operationMod: Parser[DataflowToken] = """\%""".r ^^ (_ => OperationMod)
+  def operationDiv: Parser[DataflowToken]      = """\/""".r ^^ (_ => OperationDiv)
+  def operationProd: Parser[DataflowToken]     = """\*""".r ^^ (_ => OperationProd)
+  def operationMod: Parser[DataflowToken]      = """\%""".r ^^ (_ => OperationMod)
   def operationAnd: Parser[DataflowToken]      = """\&\&""".r ^^(_ => OperationAnd)
-  def operationOr: Parser[DataflowToken]       = """\|\|""".r ^^(_ => OperationOr)
+  def operationOr: Parser[DataflowToken]       = """||""" ^^(_ => OperationOr)
    
   private def tokens: Parser[List[DataflowToken]] = // should be sorted by length to avoid early recognition
     phrase(

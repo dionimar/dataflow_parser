@@ -63,9 +63,9 @@ object StringParser extends Inputs with App {
 
   //List(test_2).map(performTest)
   List(
-    //test1
+    test1
     // test2,
-    test3
+    //test3
     // test_1,
     //test_2
     // test_3,
@@ -83,12 +83,9 @@ object StringParser extends Inputs with App {
 trait Inputs {
   lazy val test1: String =
     """
-dep window(over(dummy),
-	asc(sk, true),
-	argument1 = lag(title,1)+'-'+last(title),
-	lead(title,1)+'-'+last(title),
-        output(sk = long),
-	startAt: 1) ~> outputname
+aggregate(each(match(true()), $$+'_NotNull' = countIf(isNull($$)), $$ + '_Null' = countIf(isNull($$))),
+		each(match(type=='double'||type=='integer'||type=='short'||type=='decimal'), $$+'_stddev' = round(stddev($$),2), $$ + '_min' = min ($$), $$ + '_max' = max($$), $$ + '_average' = round(avg($$),2), $$ + '_variance' = round(variance($$),2)),
+		each(match(type=='string'), $$+'_maxLength' = max(length($$)))) ~> SummaryStats
 """
 
   lazy val test2: String = 
@@ -104,14 +101,16 @@ DerivedColumn1 window(over(dummy),
 
   lazy val test3: String =
     """
-ource(output(
+source(output(
 		movieId as string,
 		title as string,
 		genres as string
 	),
 	allowSchemaDrift: true,
 	validateSchema: false) ~> source1
+
 source1 derive(upperCaseTitle = upper(title)) ~> deriveTransformationName
+
 source1 sink(allowSchemaDrift: true,
 	validateSchema: false) ~> sink1
 """
@@ -132,7 +131,7 @@ f() ~> aux
 
   lazy val test_2: String =
         """
-a f(2-1) ~> aux
+a f(2-1+a=3) ~> aux
 a f(-1) ~> aux
 """
 
