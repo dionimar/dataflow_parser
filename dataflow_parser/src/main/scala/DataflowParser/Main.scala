@@ -15,7 +15,7 @@ object TreePrinter {
       case Id(name) => identFun(name)
       case Number(n) => identFun(n.toString)
       case Assign(id, expr) => {
-        print(List.fill(indent)("  ").mkString + id + " <- ")
+        print(List.fill(indent)("  ").mkString + "(" + id + ") <- ")
         printAST(0)(expr)
       }
       case Operation(op, ex1, ex2) => {
@@ -24,8 +24,9 @@ object TreePrinter {
         printAST(indent + 1)(ex2)
       }
       case FuncCall(id, args) => {
-        identFun("call " + id.toString)
+        identFun("call (" + id.toString)
         args.map(x => printAST(indent + 1)(x))
+        identFun(")")
       }
       case Transformation(deps, definition, output) => {
         identFun("inputs -> " + deps)
@@ -50,27 +51,31 @@ object StringParser extends Inputs with App {
   def performTest(test: String) = {
     println(test)
     val tokens = ScriptLexer.tokenize(test).toOption
-    println(tokens)
+    tokens match {
+      case None => println("None")
+      case Some(content) => content.map(println)
+    }
 
     import DataflowParser.SyntaxTree._
 
     val transformations = tokens
       .flatMap(ExpressionParser.parseFromTokens(_).toOption)
       .map(x => x match {case Blocks(trans) => trans})
-    println(transformations)
+    //println(transformations)
     transformations.map(_.map(TreePrinter.printAST(0)(_)))
+    //transformations.map(println)
   }
 
   //List(test_2).map(performTest)
   List(
-    test1
-    // test2,
-    //test3
-    // test_1,
-    //test_2
-    // test_3,
-    // test_4,
-    // test_5
+    test1,
+    test2,
+    test4,
+    test_1,
+    test_2,
+    test_3,
+    test_4,
+    test_5
   ).map(performTest)
 
 }
@@ -117,16 +122,14 @@ source1 sink(allowSchemaDrift: true,
 
   lazy val test4: String =
     """
-a f(1) ~> aux
-a, b f(1) ~> aux
-f(1) ~> aux
+f($$+'_NotNull' = countIf(isNull($$))) ~> b
 """
 
 
 
   lazy val test_1: String =
         """
-f() ~> aux
+f('_NotNull' = countIf(isNull($$)), $$ + '_Null')
 """
 
   lazy val test_2: String =

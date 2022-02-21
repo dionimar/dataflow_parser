@@ -22,22 +22,25 @@ object ExpressionParser extends Parsers {
   private def number = accept("Number", { case NumberToken(n) => Number(n)})
   private def terminal: Parser[ExpressionAST] = id | number
 
+  private def lhs: Parser[ExpressionAST] = operation | terminal
+  private def rhs: Parser[ExpressionAST] = funcCall| operation | terminal
 
   private def asign: Parser[ExpressionAST] = 
-    (id ~ (AssignEqToken | id) ~ (expr | terminal)) ^^ {
-      case Id(i) ~ Id("as") ~ value => Assign(Id(i), value)
-      case Id(i) ~ _        ~ value => Assign(Id(i), value)
+    (lhs ~ (AssignEqToken | id) ~ rhs) ^^ {
+      case leftHand ~ Id("as") ~ value => Assign(leftHand, value)
+      case leftHand ~ _        ~ value => Assign(leftHand, value)
     }
 
   private def operation: Parser[ExpressionAST] = {
     val opOptions =
-      (OperationPlus | OperationSubtract | OperationEquals | OperationAnd | OperationOr
+      (OperationPlus | OperationSubtract | OperationLEq | OperationGEq | OperationLess | OperationGreat
+        | OperationEquals | OperationAnd | OperationOr
         | OperationDiv | OperationProd | OperationMod
       )
 
     val endOp = (opOptions ~ (terminal | funcCall)) ^^ {case _ ~ t => t}
 
-    opt(funcCall | terminal) ~ opOptions ~ (endOp | expr) ^^ {
+    opt(funcCall | terminal) ~ opOptions ~ (endOp | funcCall| operation | terminal) ^^ {
       case Some(i) ~ op ~ ex => op match {
         case OperationPlus     => Operation(Add, i, ex)
         case OperationSubtract => Operation(Sub, i, ex)
@@ -70,7 +73,7 @@ object ExpressionParser extends Parsers {
   private def funcCall: Parser[ExpressionAST] = (funcCallWithArgs | funcCallWithoutArgs)
 
   private def expr: Parser[ExpressionAST] =
-    operation | asign | funcCall | terminal
+    asign | funcCall| operation | terminal
 
 
   private def inputStep: Parser[ExpressionAST] ={   
