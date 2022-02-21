@@ -11,7 +11,7 @@ import DataflowParser.Tokens._
 object ScriptLexer extends RegexParsers {
 
   override def skipWhitespace = true
-  //override def whiteSpace: Regex = "[ \t\r\f\n]+".r
+  override val whiteSpace: Regex = """[\s\t\r\f\n]+""".r
 
   def leftParenToken: Parser[DataflowToken]    = "(" ^^ (_ => LeftParenToken)
   def rightParenToken: Parser[DataflowToken]   = ")" ^^ (_ => RightParenToken)
@@ -24,7 +24,7 @@ object ScriptLexer extends RegexParsers {
   def assignEqToken: Parser[DataflowToken]     = """[\=]|[\:]""".r ^^ (_ => AssignEqToken)
 
   def numberToken: Parser[DataflowToken]       = """[0-9]+(\.){0,1}[0-9]*""".r ^^ (rep => NumberToken(rep.toFloat))
-  def literalToken: Parser[DataflowToken]      = """\'.*\'""".r ^^ (rep => LiteralToken(rep))
+  def literalToken: Parser[DataflowToken]      = """\'.*?\'""".r ^^ (rep => LiteralToken(rep))
   def identifierToken: Parser[DataflowToken]   = """(\{{0,1}[a-zA-Z]+[a-zA-Z0-9\.\_]*\}{0,1})|(\$\$)""".r ^^ (id => IdentifierToken(id))
 
   def operationEquals: Parser[DataflowToken]   = """==""" ^^ (_ => OperationEquals)
